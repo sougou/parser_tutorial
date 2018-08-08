@@ -9,7 +9,6 @@ func setResult(l yyLexer, v Result) {
 %union{
 }
 
-%token LexError
 %token String Digit
 
 %start object
