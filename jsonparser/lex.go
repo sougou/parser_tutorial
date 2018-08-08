@@ -68,7 +68,7 @@ func (l *lex) readNormal() {
 		case ch == '"':
 			l.readString()
 		default:
-			l.send(int(ch), 0)
+			l.send(int(ch), nil)
 		}
 	}
 }
@@ -81,7 +81,7 @@ func (l *lex) readString() {
 			// TODO(sougou): handle \uxxx construct.
 			escaped := escape[<-l.nextByte]
 			if escaped == 0 {
-				l.send(LexError, 0)
+				l.send(LexError, nil)
 				return
 			}
 			buf.WriteByte(escaped)
@@ -89,7 +89,7 @@ func (l *lex) readString() {
 			l.send(String, buf.String())
 			return
 		case 0:
-			l.send(LexError, 0)
+			l.send(LexError, nil)
 			return
 		default:
 			buf.WriteByte(ch)
@@ -103,7 +103,7 @@ func (l *lex) readNum() {
 			l.send(Digit, ch)
 			continue
 		}
-		l.send(int(ch), 0)
+		l.send(int(ch), nil)
 		switch ch {
 		case '+', '-', '.', 'e', 'E':
 			// continue

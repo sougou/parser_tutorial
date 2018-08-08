@@ -42,9 +42,9 @@ value:
 //------------------------------------------------------
 // The parts below are often handled by lex.
 
-number: optSign digits fracOpt expOpt
+number: signOpt digits fracOpt expOpt
 
-optSign:
+signOpt:
 | '+'
 | '-'
 
@@ -56,7 +56,7 @@ fracOpt:
 | '.' digits
 
 expOpt:
-| e optSign digits
+| e signOpt digits
 
 e:
   'e'

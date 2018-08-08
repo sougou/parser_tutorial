@@ -33,7 +33,7 @@ func setResult(l yyLexer, v map[string]interface{}) {
 %type <pair> pair
 %type <list> array elements
 %type <value> value number
-%type <bytes> optSign digits fracOpt expOpt
+%type <bytes> signOpt digits fracOpt expOpt
 %type <value> true false null
 
 %start object
@@ -107,7 +107,7 @@ value:
 //------------------------------------------------------
 // The parts below are often handled by lex.
 
-number: optSign digits fracOpt expOpt
+number: signOpt digits fracOpt expOpt
   {
     bval := append(append(append($1, $2...), $3...), $4...)
     val, err := strconv.ParseFloat(string(bval), 64)
@@ -118,7 +118,7 @@ number: optSign digits fracOpt expOpt
     $$ = val
   }
 
-optSign:
+signOpt:
   {
     $$ = nil
   }
@@ -156,7 +156,7 @@ expOpt:
   {
     $$ = nil
   }
-| e optSign digits
+| e signOpt digits
   {
     $$ = append([]byte{'e'}, $2...)
     $$ = append($$, $3...)
