@@ -7,24 +7,29 @@ import (
 //go:generate goyacc -l -o parser.go parser.y
 
 // Result is the type of the parser result
-type Result int
+type Result interface{}
 
 // Parse parses the string and returs the result.
 func Parse(input []byte) (Result, error) {
 	l := newLex(input)
 	_ = yyParse(l)
-	return l.result, l.err
+	return l.result, l.lastError
 }
 
 type lex struct {
-	next   chan int
-	result Result
-	err    error
+	next      chan token
+	result    Result
+	lastError error
+}
+
+type token struct {
+	typ int
+	val byte
 }
 
 func newLex(input []byte) *lex {
 	l := &lex{
-		next: make(chan int),
+		next: make(chan token),
 	}
 	go l.scan(input)
 	return l
@@ -36,19 +41,25 @@ func (l *lex) scan(input []byte) {
 	for _, ch := range input {
 		switch {
 		case '0' <= ch && ch <= '9':
-			l.next <- Digit
+			l.send(Digit, ch)
 		default:
-			l.next <- int(ch)
+			l.send(int(ch), 0)
 		}
 	}
 }
 
+func (l *lex) send(typ int, val byte) {
+	l.next <- token{typ: typ, val: val}
+}
+
 // Lex satisfies yyLexer.
 func (l *lex) Lex(lval *yySymType) int {
-	return <-l.next
+	tok := <-l.next
+	lval.ch = tok.val
+	return tok.typ
 }
 
 // Error satisfies yyLexer.
 func (l *lex) Error(s string) {
-	l.err = errors.New(s)
+	l.lastError = errors.New(s)
 }

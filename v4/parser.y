@@ -11,25 +11,39 @@ func setResult(l yyLexer, v Result) {
 %}
 
 %union{
-  ch byte
-  bytes []byte
   value Result
+  ch byte
+  str string
+  bytes []byte
 }
 
+%token LexError
+%token <str> String
 %token <ch> Digit
 
-%type <value> object number
+%type <value> object value number
 %type <bytes> optSign digits fracOpt expOpt
 
 %start object
 
 %%
 
-object: number
+object: value
   {
     $$ = $1
     setResult(yylex, $1)
   }
+
+value:
+  String
+  {
+    $$ = $1
+  }
+| number
+
+
+//------------------------------------------------------
+// The parts below are often handled by lex.
 
 number: optSign digits fracOpt expOpt
   {
