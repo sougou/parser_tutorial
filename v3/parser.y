@@ -1,91 +1,89 @@
 %{
 package jsonparser
 
-import (
-  "strconv"
-)
+type pair struct {
+  obj map[string]interface{}
+  key string
+  val interface{}
+}
 
-func setResult(l yyLexer, v Result) {
+func setResult(l yyLexer, v map[string]interface{}) {
   l.(*lex).result = v
 }
 %}
 
 %union{
-  ch byte
-  bytes []byte
-  value Result
+  obj map[string]interface{}
+  pair pair
+  list []interface{}
+  val interface{}
 }
 
-%token <ch> Digit
+%token LexError
+%token <val> String Number Literal
 
-%type <value> object number
-%type <bytes> signOpt digits fracOpt expOpt
+%type <obj> object members
+
+%type <val> array
+%type <list> elements
+%type <pair> pair
+%type <val> value
 
 %start object
 
 %%
 
-object: number
+object: '{' members '}'
+  {
+    $$ = $2
+    setResult(yylex, $$)
+  }
+
+members:
+  {
+    $$ = map[string]interface{}{}
+  }
+| pair
+  {
+    $$ = map[string]interface{}{
+      $1.key: $1.val,
+    }
+  }
+| members ',' pair
   {
     $$ = $1
-    setResult(yylex, $1)
+    $$[$3.key] = $3.val
   }
 
-number: signOpt digits fracOpt expOpt
+pair: String ':' value
   {
-    bval := append(append(append($1, $2...), $3...), $4...)
-    val, err := strconv.ParseFloat(string(bval), 64)
-    if err != nil {
-      yylex.Error(err.Error())
-      return 1
-    }
-    $$ = val
+    $$ = pair{key: $1.(string), val: $3}
   }
 
-signOpt:
+array: '[' elements ']'
   {
-    $$ = nil
-  }
-| '+'
-  {
-    $$ = []byte{'+'}
-  }
-| '-'
-  {
-    $$ = []byte{'-'}
+    $$ = $2
   }
 
-// TODO(sougou): first digit of a non-zero number cannot be zero.
-// Add a rule to handle that case.
-digits:
-  Digit
+elements:
   {
-    $$ = []byte{$1}
+    $$ = []interface{}{}
   }
-| digits Digit
+| value
   {
-    $$ = append($1, $2)
+    $$ = []interface{}{$1}
   }
-
-fracOpt:
+| elements ',' value
   {
-    $$ = nil
-  }
-| '.' digits
-  {
-    $$ = append([]byte{'.'}, $2...)
+    $$ = append($1, $3)
   }
 
-expOpt:
+value:
+  String
+| Number
+| object
   {
-    $$ = nil
+    $$ = $1
   }
-| e signOpt digits
-  {
-    $$ = append([]byte{'e'}, $2...)
-    $$ = append($$, $3...)
-  }
-
-e:
-  'e'
-| 'E'
+| array
+| Literal

@@ -1,40 +1,35 @@
 package jsonparser
 
 import (
+	"reflect"
 	"testing"
 )
 
 func TestParser(t *testing.T) {
 	testcases := []struct {
 		input   string
-		output  interface{}
+		output  map[string]interface{}
 		wantErr string
 	}{{
-		input:   "123",
-		output:  float64(123),
-		wantErr: "",
+		input:  `{}`,
+		output: map[string]interface{}{},
 	}, {
-		input:   "123.1",
-		output:  float64(123.1),
-		wantErr: "",
+		input: `{"a": 1}`,
+		output: map[string]interface{}{
+			"a": float64(1),
+		},
 	}, {
-		input:   "0.1",
-		output:  float64(0.1),
-		wantErr: "",
+		input: `{"a": 1, "b": ["c", 2]}`,
+		output: map[string]interface{}{
+			"a": float64(1),
+			"b": []interface{}{"c", float64(2)},
+		},
 	}, {
-		input:   "123.1e-1",
-		output:  float64(123.1e-1),
-		wantErr: "",
+		input:   `.1`,
+		wantErr: `syntax error`,
 	}, {
-		input:   "123.1e1",
-		output:  float64(123.1e1),
-		wantErr: "",
-	}, {
-		input:   ".1",
-		wantErr: "syntax error",
-	}, {
-		input:   "invalid",
-		wantErr: "syntax error",
+		input:   `invalid`,
+		wantErr: `syntax error`,
 	}}
 	for _, tc := range testcases {
 		got, err := Parse([]byte(tc.input))
@@ -43,10 +38,10 @@ func TestParser(t *testing.T) {
 			gotErr = err.Error()
 		}
 		if gotErr != tc.wantErr {
-			t.Errorf("%s err: %v, want %v", tc.input, gotErr, tc.wantErr)
+			t.Errorf(`%s err: %v, want %v`, tc.input, gotErr, tc.wantErr)
 		}
-		if got != tc.output {
-			t.Errorf("%s: %v wnat %v", tc.input, got, tc.output)
+		if !reflect.DeepEqual(got, tc.output) {
+			t.Errorf(`%s: %#v want %#v`, tc.input, got, tc.output)
 		}
 	}
 }

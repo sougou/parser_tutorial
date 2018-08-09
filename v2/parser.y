@@ -9,7 +9,7 @@ func setResult(l yyLexer, v Result) {
 %union{
 }
 
-%token String Digit
+%token String Number True False Null
 
 %start object
 
@@ -31,39 +31,9 @@ elements:
 
 value:
   String
-| number
+| Number
 | object
 | array
-| true
-| false
-| null
-
-
-//------------------------------------------------------
-// The parts below are often handled by lex.
-
-number: signOpt digits fracOpt expOpt
-
-signOpt:
-| '+'
-| '-'
-
-digits:
-  Digit
-| digits Digit
-
-fracOpt:
-| '.' digits
-
-expOpt:
-| e signOpt digits
-
-e:
-  'e'
-| 'E'
-
-true: 't' 'r' 'u' 'e'
-
-false: 'f' 'a' 'l' 's' 'e'
-
-null: 'n' 'u' 'l' 'l'
+| True
+| False
+| Null

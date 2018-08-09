@@ -1,6 +1,7 @@
 package jsonparser
 
 import (
+	"bytes"
 	"errors"
 )
 
@@ -17,17 +18,28 @@ func Parse(input []byte) (Result, error) {
 }
 
 type lex struct {
+	input  *bytes.Buffer
 	result Result
 	err    error
 }
 
 func newLex(input []byte) *lex {
-	return &lex{}
+	return &lex{
+		input: bytes.NewBuffer(input),
+	}
 }
 
 // Lex satisfies yyLexer.
 func (l *lex) Lex(lval *yySymType) int {
-	return 0
+	return int(l.nextb())
+}
+
+func (l *lex) nextb() byte {
+	b, err := l.input.ReadByte()
+	if err != nil {
+		return 0
+	}
+	return b
 }
 
 // Error satisfies yyLexer.
