@@ -3,12 +3,9 @@ package jsonparser
 
 import __yyfmt__ "fmt"
 
-import (
-	"strconv"
-)
-
 type pair struct {
-	str string
+	obj map[string]interface{}
+	key string
 	val interface{}
 }
 
@@ -17,19 +14,17 @@ func setResult(l yyLexer, v map[string]interface{}) {
 }
 
 type yySymType struct {
-	yys   int
-	obj   map[string]interface{}
-	list  []interface{}
-	value interface{}
-	pair  pair
-	ch    byte
-	bytes []byte
-	str   string
+	yys  int
+	obj  map[string]interface{}
+	pair pair
+	list []interface{}
+	val  interface{}
 }
 
 const LexError = 57346
 const String = 57347
-const Digit = 57348
+const Number = 57348
+const Literal = 57349
 
 var yyToknames = [...]string{
 	"$end",
@@ -37,26 +32,14 @@ var yyToknames = [...]string{
 	"$unk",
 	"LexError",
 	"String",
-	"Digit",
+	"Number",
+	"Literal",
 	"'{'",
 	"'}'",
 	"','",
 	"':'",
 	"'['",
 	"']'",
-	"'+'",
-	"'-'",
-	"'.'",
-	"'e'",
-	"'E'",
-	"'t'",
-	"'r'",
-	"'u'",
-	"'f'",
-	"'a'",
-	"'l'",
-	"'s'",
-	"'n'",
 }
 var yyStatenames = [...]string{}
 
@@ -68,69 +51,49 @@ var yyExca = [...]int{
 	-1, 1,
 	1, -1,
 	-2, 0,
-	-1, 19,
-	6, 18,
-	-2, 7,
 }
 
 const yyPrivate = 57344
 
-const yyLast = 55
+const yyLast = 23
 
 var yyAct = [...]int{
 
-	25, 18, 10, 11, 47, 2, 48, 39, 38, 19,
-	30, 23, 24, 37, 31, 29, 20, 42, 43, 21,
-	50, 46, 28, 22, 33, 23, 24, 8, 36, 6,
-	7, 35, 4, 34, 2, 44, 33, 26, 5, 45,
-	9, 13, 1, 49, 41, 17, 16, 15, 40, 32,
-	51, 12, 27, 14, 3,
+	10, 11, 12, 15, 2, 8, 2, 20, 16, 5,
+	19, 6, 7, 17, 4, 13, 1, 18, 14, 3,
+	0, 21, 9,
 }
 var yyPact = [...]int{
 
-	27, -1000, 33, 21, -1000, 17, -1000, 33, -2, -1000,
-	-1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, 31, -2,
-	-4, -12, -6, -1000, -1000, 18, -1000, 19, -1000, -7,
-	-15, -16, 1, -1000, 31, -1000, -2, 5, -20, -17,
-	-1000, 12, -1000, -1000, 30, -1000, -1000, 4, -1000, 31,
-	-1000, 30,
+	-2, -1000, 4, 2, -1000, -6, -1000, 4, -4, -1000,
+	-1000, -1000, -1000, -1000, -1000, -1000, -4, -3, -1000, -1000,
+	-4, -1000,
 }
 var yyPgo = [...]int{
 
-	0, 41, 54, 32, 53, 52, 2, 51, 1, 0,
-	49, 48, 47, 46, 45, 44,
+	0, 15, 19, 18, 13, 14, 0,
 }
 var yyR1 = [...]int{
 
-	0, 1, 2, 2, 2, 3, 4, 5, 5, 5,
-	6, 6, 6, 6, 6, 6, 6, 7, 8, 8,
-	8, 9, 9, 10, 10, 11, 11, 15, 15, 12,
-	13, 14,
+	0, 1, 2, 2, 2, 5, 3, 4, 4, 4,
+	6, 6, 6, 6, 6,
 }
 var yyR2 = [...]int{
 
 	0, 3, 0, 1, 3, 3, 3, 0, 1, 3,
-	1, 1, 1, 1, 1, 1, 1, 4, 0, 1,
-	1, 1, 2, 0, 2, 0, 3, 1, 1, 4,
-	5, 4,
+	1, 1, 1, 1, 1,
 }
 var yyChk = [...]int{
 
-	-1000, -1, 7, -2, -3, 5, 8, 9, 10, -3,
-	-6, 5, -7, -1, -4, -12, -13, -14, -8, 11,
-	18, 21, 25, 13, 14, -9, 6, -5, -6, 19,
-	22, 20, -10, 6, 15, 12, 9, 20, 23, 23,
-	-11, -15, 16, 17, -9, -6, 16, 24, 23, -8,
-	16, -9,
+	-1000, -1, 8, -2, -5, 5, 9, 10, 11, -5,
+	-6, 5, 6, -1, -3, 7, 12, -4, -6, 13,
+	10, -6,
 }
 var yyDef = [...]int{
 
-	0, -2, 2, 0, 3, 0, 1, 0, 18, 4,
-	5, 10, 11, 12, 13, 14, 15, 16, 0, -2,
-	0, 0, 0, 19, 20, 23, 21, 0, 8, 0,
-	0, 0, 25, 22, 0, 6, 18, 0, 0, 0,
-	17, 18, 27, 28, 24, 9, 29, 0, 31, 0,
-	30, 26,
+	0, -2, 2, 0, 3, 0, 1, 0, 0, 4,
+	5, 10, 11, 12, 13, 14, 7, 0, 8, 6,
+	0, 9,
 }
 var yyTok1 = [...]int{
 
@@ -138,19 +101,19 @@ var yyTok1 = [...]int{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 13, 9, 14, 15, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 10, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 17,
+	3, 3, 3, 3, 10, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 11, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 11, 3, 12, 3, 3, 3, 22, 3, 3,
-	3, 16, 21, 3, 3, 3, 3, 3, 23, 3,
-	25, 3, 3, 3, 19, 24, 18, 20, 3, 3,
-	3, 3, 3, 7, 3, 8,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 12, 3, 13, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 8, 3, 9,
 }
 var yyTok2 = [...]int{
 
-	2, 3, 4, 5, 6,
+	2, 3, 4, 5, 6, 7,
 }
 var yyTok3 = [...]int{
 	0,
@@ -506,126 +469,44 @@ yydefault:
 		yyDollar = yyS[yypt-1 : yypt+1]
 		{
 			yyVAL.obj = map[string]interface{}{
-				yyDollar[1].pair.str: yyDollar[1].pair.val,
+				yyDollar[1].pair.key: yyDollar[1].pair.val,
 			}
 		}
 	case 4:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		{
-			yyDollar[1].obj[yyDollar[3].pair.str] = yyDollar[3].pair.val
 			yyVAL.obj = yyDollar[1].obj
+			yyVAL.obj[yyDollar[3].pair.key] = yyDollar[3].pair.val
 		}
 	case 5:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		{
-			yyVAL.pair = pair{str: yyDollar[1].str, val: yyDollar[3].value}
+			yyVAL.pair = pair{key: yyDollar[1].val.(string), val: yyDollar[3].val}
 		}
 	case 6:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		{
-			yyVAL.list = yyDollar[2].list
+			yyVAL.val = yyDollar[2].list
 		}
 	case 7:
 		yyDollar = yyS[yypt-0 : yypt+1]
 		{
-			yyVAL.list = nil
+			yyVAL.list = []interface{}{}
 		}
 	case 8:
 		yyDollar = yyS[yypt-1 : yypt+1]
 		{
-			yyVAL.list = []interface{}{yyDollar[1].value}
+			yyVAL.list = []interface{}{yyDollar[1].val}
 		}
 	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		{
-			yyVAL.list = append(yyDollar[1].list, yyDollar[3].value)
-		}
-	case 10:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		{
-			yyVAL.value = yyDollar[1].str
+			yyVAL.list = append(yyDollar[1].list, yyDollar[3].val)
 		}
 	case 12:
 		yyDollar = yyS[yypt-1 : yypt+1]
 		{
-			yyVAL.value = yyDollar[1].obj
-		}
-	case 13:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		{
-			yyVAL.value = yyDollar[1].list
-		}
-	case 17:
-		yyDollar = yyS[yypt-4 : yypt+1]
-		{
-			bval := append(append(append(yyDollar[1].bytes, yyDollar[2].bytes...), yyDollar[3].bytes...), yyDollar[4].bytes...)
-			val, err := strconv.ParseFloat(string(bval), 64)
-			if err != nil {
-				yylex.Error(err.Error())
-				return 1
-			}
-			yyVAL.value = val
-		}
-	case 18:
-		yyDollar = yyS[yypt-0 : yypt+1]
-		{
-			yyVAL.bytes = nil
-		}
-	case 19:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		{
-			yyVAL.bytes = []byte{'+'}
-		}
-	case 20:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		{
-			yyVAL.bytes = []byte{'-'}
-		}
-	case 21:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		{
-			yyVAL.bytes = []byte{yyDollar[1].ch}
-		}
-	case 22:
-		yyDollar = yyS[yypt-2 : yypt+1]
-		{
-			yyVAL.bytes = append(yyDollar[1].bytes, yyDollar[2].ch)
-		}
-	case 23:
-		yyDollar = yyS[yypt-0 : yypt+1]
-		{
-			yyVAL.bytes = nil
-		}
-	case 24:
-		yyDollar = yyS[yypt-2 : yypt+1]
-		{
-			yyVAL.bytes = append([]byte{'.'}, yyDollar[2].bytes...)
-		}
-	case 25:
-		yyDollar = yyS[yypt-0 : yypt+1]
-		{
-			yyVAL.bytes = nil
-		}
-	case 26:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		{
-			yyVAL.bytes = append([]byte{'e'}, yyDollar[2].bytes...)
-			yyVAL.bytes = append(yyVAL.bytes, yyDollar[3].bytes...)
-		}
-	case 29:
-		yyDollar = yyS[yypt-4 : yypt+1]
-		{
-			yyVAL.value = true
-		}
-	case 30:
-		yyDollar = yyS[yypt-5 : yypt+1]
-		{
-			yyVAL.value = false
-		}
-	case 31:
-		yyDollar = yyS[yypt-4 : yypt+1]
-		{
-			yyVAL.value = nil
+			yyVAL.val = yyDollar[1].obj
 		}
 	}
 	goto yystack /* stack new state and value */

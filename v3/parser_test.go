@@ -25,6 +25,28 @@ func TestParser(t *testing.T) {
 			"b": []interface{}{"c", float64(2)},
 		},
 	}, {
+		input: `{"a": []}`,
+		output: map[string]interface{}{
+			"a": []interface{}{},
+		},
+	}, {
+		input: `{"a": [1.2]}`,
+		output: map[string]interface{}{
+			"a": []interface{}{float64(1.2)},
+		},
+	}, {
+		input: `{"a": [1.2, 2.3]}`,
+		output: map[string]interface{}{
+			"a": []interface{}{float64(1.2), float64(2.3)},
+		},
+	}, {
+		input: `{"a": true, "b": false, "c": null}`,
+		output: map[string]interface{}{
+			"a": true,
+			"b": false,
+			"c": nil,
+		},
+	}, {
 		input:   `.1`,
 		wantErr: `syntax error`,
 	}, {

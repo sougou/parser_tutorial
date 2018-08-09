@@ -18,8 +18,8 @@ func Parse(input []byte) (map[string]interface{}, error) {
 }
 
 type lex struct {
-	input  *bytes.Buffer
-	pushed byte
+	input  []byte
+	pos    int
 	result map[string]interface{}
 	err    error
 }
@@ -31,7 +31,7 @@ type token struct {
 
 func newLex(input []byte) *lex {
 	return &lex{
-		input: bytes.NewBuffer(input),
+		input: input,
 	}
 }
 
@@ -41,17 +41,17 @@ func (l *lex) Lex(lval *yySymType) int {
 }
 
 func (l *lex) scanNormal(lval *yySymType) int {
-	for b := l.nextb(); b != 0; b = l.nextb() {
+	for b := l.next(); b != 0; b = l.next() {
 		switch {
 		case unicode.IsSpace(rune(b)):
 			continue
 		case b == '"':
 			return l.scanString(lval)
 		case unicode.IsDigit(rune(b)) || b == '+' || b == '-':
-			l.pushb(b)
+			l.backup(b)
 			return l.scanNum(lval)
 		case unicode.IsLetter(rune(b)):
-			l.pushb(b)
+			l.backup(b)
 			return l.scanLiteral(lval)
 		default:
 			return int(b)
@@ -73,11 +73,11 @@ var escape = map[byte]byte{
 
 func (l *lex) scanString(lval *yySymType) int {
 	buf := bytes.NewBuffer(nil)
-	for b := l.nextb(); b != 0; b = l.nextb() {
+	for b := l.next(); b != 0; b = l.next() {
 		switch b {
 		case '\\':
 			// TODO(sougou): handle \uxxxx construct.
-			b2 := escape[l.nextb()]
+			b2 := escape[l.next()]
 			if b2 == 0 {
 				return LexError
 			}
@@ -89,19 +89,20 @@ func (l *lex) scanString(lval *yySymType) int {
 			buf.WriteByte(b)
 		}
 	}
-	return 0
+	return LexError
 }
 
 func (l *lex) scanNum(lval *yySymType) int {
 	buf := bytes.NewBuffer(nil)
-	for b := l.nextb(); b != 0; b = l.nextb() {
+	for {
+		b := l.next()
 		switch {
 		case unicode.IsDigit(rune(b)):
 			buf.WriteByte(b)
 		case strings.IndexByte(".+-eE", b) != -1:
 			buf.WriteByte(b)
 		default:
-			l.pushb(b)
+			l.backup(b)
 			val, err := strconv.ParseFloat(buf.String(), 64)
 			if err != nil {
 				return LexError
@@ -110,7 +111,6 @@ func (l *lex) scanNum(lval *yySymType) int {
 			return Number
 		}
 	}
-	return 0
 }
 
 var literal = map[string]interface{}{
@@ -121,12 +121,13 @@ var literal = map[string]interface{}{
 
 func (l *lex) scanLiteral(lval *yySymType) int {
 	buf := bytes.NewBuffer(nil)
-	for b := l.nextb(); b != 0; b = l.nextb() {
+	for {
+		b := l.next()
 		switch {
 		case unicode.IsLetter(rune(b)):
 			buf.WriteByte(b)
 		default:
-			l.pushb(b)
+			l.backup(b)
 			val, ok := literal[buf.String()]
 			if !ok {
 				return LexError
@@ -135,24 +136,25 @@ func (l *lex) scanLiteral(lval *yySymType) int {
 			return Literal
 		}
 	}
-	return 0
 }
 
-func (l *lex) pushb(b byte) {
-	l.pushed = b
-}
-
-func (l *lex) nextb() byte {
-	if l.pushed != 0 {
-		b := l.pushed
-		l.pushed = 0
-		return b
+func (l *lex) backup(b byte) {
+	// No-op on EOF.
+	if b == 0 {
+		return
 	}
-	b, err := l.input.ReadByte()
-	if err != nil {
+	if l.pos == 0 {
+		panic("unexpected")
+	}
+	l.pos--
+}
+
+func (l *lex) next() byte {
+	if l.pos >= len(l.input) {
 		return 0
 	}
-	return b
+	l.pos++
+	return l.input[l.pos-1]
 }
 
 // Error satisfies yyLexer.
