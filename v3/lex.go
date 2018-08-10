@@ -48,10 +48,10 @@ func (l *lex) scanNormal(lval *yySymType) int {
 		case b == '"':
 			return l.scanString(lval)
 		case unicode.IsDigit(rune(b)) || b == '+' || b == '-':
-			l.backup(b)
+			l.backup()
 			return l.scanNum(lval)
 		case unicode.IsLetter(rune(b)):
-			l.backup(b)
+			l.backup()
 			return l.scanLiteral(lval)
 		default:
 			return int(b)
@@ -102,7 +102,7 @@ func (l *lex) scanNum(lval *yySymType) int {
 		case strings.IndexByte(".+-eE", b) != -1:
 			buf.WriteByte(b)
 		default:
-			l.backup(b)
+			l.backup()
 			val, err := strconv.ParseFloat(buf.String(), 64)
 			if err != nil {
 				return LexError
@@ -127,7 +127,7 @@ func (l *lex) scanLiteral(lval *yySymType) int {
 		case unicode.IsLetter(rune(b)):
 			buf.WriteByte(b)
 		default:
-			l.backup(b)
+			l.backup()
 			val, ok := literal[buf.String()]
 			if !ok {
 				return LexError
@@ -138,19 +138,16 @@ func (l *lex) scanLiteral(lval *yySymType) int {
 	}
 }
 
-func (l *lex) backup(b byte) {
-	// No-op on EOF.
-	if b == 0 {
+func (l *lex) backup() {
+	if l.pos == -1 {
 		return
-	}
-	if l.pos == 0 {
-		panic("unexpected")
 	}
 	l.pos--
 }
 
 func (l *lex) next() byte {
-	if l.pos >= len(l.input) {
+	if l.pos >= len(l.input) || l.pos == -1 {
+		l.pos = -1
 		return 0
 	}
 	l.pos++
