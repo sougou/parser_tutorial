@@ -10,9 +10,13 @@ import (
 
 //go:generate goyacc -l -o parser.go parser.y
 
+// This is a channel based implementation of lex.
+
 // Parse parses the input and returs the result.
 func Parse(input []byte) (map[string]interface{}, error) {
 	l := newLex(input)
+	defer func() { close(l.done) }()
+
 	_ = yyParse(l)
 	return l.result, l.err
 }
@@ -20,39 +24,53 @@ func Parse(input []byte) (map[string]interface{}, error) {
 type lex struct {
 	input  []byte
 	pos    int
+	next   chan token
+	done   chan struct{}
 	result map[string]interface{}
 	err    error
 }
 
+type token struct {
+	typ int
+	val interface{}
+}
+
 func newLex(input []byte) *lex {
-	return &lex{
+	l := &lex{
 		input: input,
+		next:  make(chan token),
+		done:  make(chan struct{}),
 	}
+	go l.run()
+	return l
 }
 
 // Lex satisfies yyLexer.
 func (l *lex) Lex(lval *yySymType) int {
-	return l.scanNormal(lval)
+	tok := <-l.next
+	lval.val = tok.val
+	return tok.typ
 }
 
-func (l *lex) scanNormal(lval *yySymType) int {
-	for b := l.next(); b != 0; b = l.next() {
+func (l *lex) run() {
+	defer close(l.next)
+
+	for b := l.nextb(); b != 0; b = l.nextb() {
 		switch {
 		case unicode.IsSpace(rune(b)):
 			continue
 		case b == '"':
-			return l.scanString(lval)
+			l.scanString()
 		case unicode.IsDigit(rune(b)) || b == '+' || b == '-':
 			l.backup()
-			return l.scanNum(lval)
+			l.scanNum()
 		case unicode.IsLetter(rune(b)):
 			l.backup()
-			return l.scanLiteral(lval)
+			l.scanLiteral()
 		default:
-			return int(b)
+			l.send(int(b), nil)
 		}
 	}
-	return 0
 }
 
 var escape = map[byte]byte{
@@ -66,31 +84,32 @@ var escape = map[byte]byte{
 	't':  '\t',
 }
 
-func (l *lex) scanString(lval *yySymType) int {
+func (l *lex) scanString() {
 	buf := bytes.NewBuffer(nil)
-	for b := l.next(); b != 0; b = l.next() {
+	for b := l.nextb(); b != 0; b = l.nextb() {
 		switch b {
 		case '\\':
 			// TODO(sougou): handle \uxxxx construct.
-			b2 := escape[l.next()]
+			b2 := escape[l.nextb()]
 			if b2 == 0 {
-				return LexError
+				l.send(LexError, nil)
+				return
 			}
 			buf.WriteByte(b2)
 		case '"':
-			lval.val = buf.String()
-			return String
+			l.send(String, buf.String())
+			return
 		default:
 			buf.WriteByte(b)
 		}
 	}
-	return LexError
+	l.send(LexError, nil)
 }
 
-func (l *lex) scanNum(lval *yySymType) int {
+func (l *lex) scanNum() {
 	buf := bytes.NewBuffer(nil)
 	for {
-		b := l.next()
+		b := l.nextb()
 		switch {
 		case unicode.IsDigit(rune(b)):
 			buf.WriteByte(b)
@@ -100,10 +119,11 @@ func (l *lex) scanNum(lval *yySymType) int {
 			l.backup()
 			val, err := strconv.ParseFloat(buf.String(), 64)
 			if err != nil {
-				return LexError
+				l.send(LexError, nil)
+				return
 			}
-			lval.val = val
-			return Number
+			l.send(Number, val)
+			return
 		}
 	}
 }
@@ -114,10 +134,10 @@ var literal = map[string]interface{}{
 	"null":  nil,
 }
 
-func (l *lex) scanLiteral(lval *yySymType) int {
+func (l *lex) scanLiteral() {
 	buf := bytes.NewBuffer(nil)
 	for {
-		b := l.next()
+		b := l.nextb()
 		switch {
 		case unicode.IsLetter(rune(b)):
 			buf.WriteByte(b)
@@ -125,11 +145,19 @@ func (l *lex) scanLiteral(lval *yySymType) int {
 			l.backup()
 			val, ok := literal[buf.String()]
 			if !ok {
-				return LexError
+				l.send(LexError, nil)
+				return
 			}
-			lval.val = val
-			return Literal
+			l.send(Literal, val)
+			return
 		}
+	}
+}
+
+func (l *lex) send(typ int, val interface{}) {
+	select {
+	case l.next <- token{typ: typ, val: val}:
+	case <-l.done:
 	}
 }
 
@@ -140,7 +168,13 @@ func (l *lex) backup() {
 	l.pos--
 }
 
-func (l *lex) next() byte {
+func (l *lex) nextb() byte {
+	select {
+	case <-l.done:
+		return 0
+	default:
+	}
+
 	if l.pos >= len(l.input) || l.pos == -1 {
 		l.pos = -1
 		return 0

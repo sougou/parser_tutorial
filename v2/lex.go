@@ -10,7 +10,7 @@ import (
 // Result is the type of the parser result
 type Result int
 
-// Parse parses the string and returs the result.
+// Parse parses the input and returs the result.
 func Parse(input []byte) (Result, error) {
 	l := newLex(input)
 	_ = yyParse(l)

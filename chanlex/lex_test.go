@@ -5,11 +5,6 @@ import (
 	"testing"
 )
 
-type token struct {
-	typ int
-	val interface{}
-}
-
 func TestLex(t *testing.T) {
 	testcases := []struct {
 		input  string
