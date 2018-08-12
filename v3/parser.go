@@ -4,7 +4,6 @@ package jsonparser
 import __yyfmt__ "fmt"
 
 type pair struct {
-	obj map[string]interface{}
 	key string
 	val interface{}
 }
@@ -16,8 +15,8 @@ func setResult(l yyLexer, v map[string]interface{}) {
 type yySymType struct {
 	yys  int
 	obj  map[string]interface{}
-	pair pair
 	list []interface{}
+	pair pair
 	val  interface{}
 }
 
@@ -71,11 +70,11 @@ var yyPact = [...]int{
 }
 var yyPgo = [...]int{
 
-	0, 15, 19, 18, 13, 14, 0,
+	0, 15, 19, 14, 18, 13, 0,
 }
 var yyR1 = [...]int{
 
-	0, 1, 2, 2, 2, 5, 3, 4, 4, 4,
+	0, 1, 2, 2, 2, 3, 4, 5, 5, 5,
 	6, 6, 6, 6, 6,
 }
 var yyR2 = [...]int{
@@ -85,8 +84,8 @@ var yyR2 = [...]int{
 }
 var yyChk = [...]int{
 
-	-1000, -1, 8, -2, -5, 5, 9, 10, 11, -5,
-	-6, 5, 6, -1, -3, 7, 12, -4, -6, 13,
+	-1000, -1, 8, -2, -3, 5, 9, 10, 11, -3,
+	-6, 5, 6, -1, -4, 7, 12, -5, -6, 13,
 	10, -6,
 }
 var yyDef = [...]int{
@@ -475,8 +474,8 @@ yydefault:
 	case 4:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		{
+			yyDollar[1].obj[yyDollar[3].pair.key] = yyDollar[3].pair.val
 			yyVAL.obj = yyDollar[1].obj
-			yyVAL.obj[yyDollar[3].pair.key] = yyDollar[3].pair.val
 		}
 	case 5:
 		yyDollar = yyS[yypt-3 : yypt+1]

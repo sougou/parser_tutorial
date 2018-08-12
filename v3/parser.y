@@ -2,7 +2,6 @@
 package jsonparser
 
 type pair struct {
-  obj map[string]interface{}
   key string
   val interface{}
 }
@@ -14,8 +13,8 @@ func setResult(l yyLexer, v map[string]interface{}) {
 
 %union{
   obj map[string]interface{}
-  pair pair
   list []interface{}
+  pair pair
   val interface{}
 }
 
@@ -23,11 +22,11 @@ func setResult(l yyLexer, v map[string]interface{}) {
 %token <val> String Number Literal
 
 %type <obj> object members
-
+%type <pair> pair
 %type <val> array
 %type <list> elements
-%type <pair> pair
 %type <val> value
+
 
 %start object
 
@@ -51,8 +50,8 @@ members:
   }
 | members ',' pair
   {
+    $1[$3.key] = $3.val
     $$ = $1
-    $$[$3.key] = $3.val
   }
 
 pair: String ':' value
