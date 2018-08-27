@@ -23,7 +23,6 @@ main: phone
 phone:
   area part1 part2
 | area '-' part1 '-' part2
-| '(' area ')' part1 '-' part2
 
 area: D D D
 
