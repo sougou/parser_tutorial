@@ -80,9 +80,9 @@ elements:
 value:
   String
 | Number
+| Literal
 | object
   {
     $$ = $1
   }
 | array
-| Literal

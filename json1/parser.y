@@ -9,7 +9,7 @@ func setResult(l yyLexer, v Result) {
 %union{
 }
 
-%token String Number True False Null
+%token String Number Literal
 
 %start object
 
@@ -32,8 +32,6 @@ elements:
 value:
   String
 | Number
+| Literal
 | object
 | array
-| True
-| False
-| Null
