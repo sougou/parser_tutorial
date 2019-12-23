@@ -6,7 +6,7 @@ import (
 	"unicode"
 )
 
-//go:generate goyacc -l -o parser.go parser.y
+//go:generate go run golang.org/x/tools/cmd/goyacc -l -o parser.go parser.y
 
 // Result is the type of the parser result
 type Result struct {

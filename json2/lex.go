@@ -8,7 +8,7 @@ import (
 	"unicode"
 )
 
-//go:generate goyacc -l -o parser.go parser.y
+//go:generate go run golang.org/x/tools/cmd/goyacc -l -o parser.go parser.y
 
 // Parse parses the input and returs the result.
 func Parse(input []byte) (map[string]interface{}, error) {
